@@ -1,0 +1,7 @@
+npm error Lifecycle script `start` failed with error:
+npm error code 4294967295
+npm error path C:\Users\hbche\Documents\Projects_IT\Smart College Placement Management System\backend
+npm error workspace @scpm/backend@1.0.0
+npm error location C:\Users\hbche\Documents\Projects_IT\Smart College Placement Management System\backend
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c node src/server.js
