@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BriefcaseBusiness, Building2, ClipboardList, ShieldCheck, Upload, UsersRound } from 'lucide-react';
+import { BriefcaseBusiness, Building2, ClipboardList, Pencil, ShieldCheck, Upload, UsersRound } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { api } from '../services/api.js';
 import { StatCard } from '../components/StatCard.jsx';
@@ -44,8 +44,14 @@ const splitList = (value) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
+const hasStudentProfileData = (profile = {}) =>
+  ['phone', 'usn', 'branch', 'cgpa', 'backlogs', 'graduationYear', 'linkedin', 'github', 'portfolio'].some((field) => Boolean(profile[field])) ||
+  (profile.skills || []).length > 0;
+
 const StudentProfile = ({ profile, setProfile }) => {
   const [resumes, setResumes] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const hasSavedProfile = hasStudentProfileData(profile);
 
   useEffect(() => {
     api.get('/profiles/resumes').then(({ data }) => setResumes(data.resumes));
@@ -55,6 +61,7 @@ const StudentProfile = ({ profile, setProfile }) => {
     event.preventDefault();
     const { data } = await api.put('/profiles/student', profile);
     setProfile(data.profile);
+    setIsEditing(false);
   };
 
   const uploadResume = async (event) => {
@@ -67,25 +74,64 @@ const StudentProfile = ({ profile, setProfile }) => {
     setResumes([data.resume, ...resumes]);
   };
 
+  const profileRows = [
+    ['Phone', profile.phone],
+    ['USN', profile.usn],
+    ['Branch', profile.branch],
+    ['CGPA', profile.cgpa],
+    ['Backlogs', profile.backlogs],
+    ['Graduation Year', profile.graduationYear],
+    ['LinkedIn', profile.linkedin],
+    ['GitHub', profile.github],
+    ['Portfolio', profile.portfolio],
+    ['Skills', (profile.skills || []).join(', ')]
+  ];
+
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
-      <form onSubmit={saveStudent} className="rounded-md border border-slate-200 bg-white p-5">
-        <h2 className="text-lg font-semibold text-ink">Student Profile</h2>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          {['phone', 'usn', 'branch', 'cgpa', 'backlogs', 'graduationYear', 'linkedin', 'github', 'portfolio'].map((field) => (
-            <TextInput key={field} label={field} value={profile[field]} onChange={(value) => setProfile({ ...profile, [field]: value })} />
-          ))}
-        </div>
-        <label className="mt-4 block text-sm font-medium text-slate-700">
-          Skills
-          <input
-            className="focus-ring mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
-            value={(profile.skills || []).join(', ')}
-            onChange={(event) => setProfile({ ...profile, skills: splitList(event.target.value) })}
-          />
-        </label>
-        <button className="focus-ring mt-5 rounded-md bg-brand px-4 py-2 font-medium text-white">Save profile</button>
-      </form>
+      {hasSavedProfile && !isEditing ? (
+        <section className="rounded-md border border-slate-200 bg-white p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-ink">Student Profile</h2>
+            <button onClick={() => setIsEditing(true)} className="focus-ring inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 font-medium text-white">
+              <Pencil size={16} /> Edit
+            </button>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {profileRows.map(([label, value]) => (
+              <div key={label} className="rounded-md bg-slate-50 px-3 py-2">
+                <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
+                <p className="mt-1 text-sm text-ink">{value || 'Not added'}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <form onSubmit={saveStudent} className="rounded-md border border-slate-200 bg-white p-5">
+          <h2 className="text-lg font-semibold text-ink">Student Profile</h2>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            {['phone', 'usn', 'branch', 'cgpa', 'backlogs', 'graduationYear', 'linkedin', 'github', 'portfolio'].map((field) => (
+              <TextInput key={field} label={field} value={profile[field]} onChange={(value) => setProfile({ ...profile, [field]: value })} />
+            ))}
+          </div>
+          <label className="mt-4 block text-sm font-medium text-slate-700">
+            Skills
+            <input
+              className="focus-ring mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+              value={(profile.skills || []).join(', ')}
+              onChange={(event) => setProfile({ ...profile, skills: splitList(event.target.value) })}
+            />
+          </label>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button className="focus-ring rounded-md bg-brand px-4 py-2 font-medium text-white">Save profile</button>
+            {hasSavedProfile && (
+              <button type="button" onClick={() => setIsEditing(false)} className="focus-ring rounded-md border border-slate-200 px-4 py-2 font-medium text-slate-700">
+                Cancel
+              </button>
+            )}
+          </div>
+        </form>
+      )}
       <aside className="rounded-md border border-slate-200 bg-white p-5">
         <h2 className="text-lg font-semibold text-ink">Resume Management</h2>
         <label className="focus-ring mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 p-5 text-sm font-medium text-slate-700">

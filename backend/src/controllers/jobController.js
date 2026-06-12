@@ -1,14 +1,37 @@
 import { Job } from '../models/Job.js';
 import { SavedJob } from '../models/SavedJob.js';
 import { Company } from '../models/Company.js';
+import { Application } from '../models/Application.js';
 import { AppError } from '../utils/AppError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { createJobWithNotifications, searchJobs } from '../services/jobService.js';
 import { checkEligibility } from '../services/eligibilityService.js';
+import { ROLES } from '../utils/constants.js';
 
 export const listJobs = asyncHandler(async (req, res) => {
   const jobs = await searchJobs(req.query);
-  res.json({ success: true, jobs });
+  if (req.user?.role !== ROLES.STUDENT) {
+    res.json({ success: true, jobs });
+    return;
+  }
+
+  const applications = await Application.find({
+    student: req.user._id,
+    job: { $in: jobs.map((job) => job._id) }
+  }).select('job status');
+  const applicationByJobId = new Map(applications.map((application) => [application.job.toString(), application]));
+
+  res.json({
+    success: true,
+    jobs: jobs.map((job) => {
+      const application = applicationByJobId.get(job._id.toString());
+      return {
+        ...job.toObject(),
+        applicationStatus: application?.status,
+        applicationId: application?._id
+      };
+    })
+  });
 });
 
 export const hiringFeed = asyncHandler(async (_req, res) => {

@@ -10,6 +10,12 @@ import { analyzeResumeForJob } from '../services/atsService.js';
 import { createNotification } from '../services/notificationService.js';
 
 export const applyForJob = asyncHandler(async (req, res) => {
+  const existingApplication = await Application.findOne({ student: req.user._id, job: req.params.jobId });
+  if (existingApplication) {
+    res.json({ success: true, application: existingApplication, alreadyApplied: true });
+    return;
+  }
+
   const eligibility = await checkEligibility({ studentUserId: req.user._id, jobId: req.params.jobId });
   if (!eligibility.eligible) throw new AppError(eligibility.reasons.join(', '), 400);
 

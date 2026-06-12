@@ -5,9 +5,11 @@ import { Timeline } from '../components/Timeline.jsx';
 
 const statusDepth = {
   applied: 1,
+  under_review: 2,
   shortlisted: 2,
   interview_scheduled: 3,
   selected: 5,
+  rejected: 5,
   offer_released: 6
 };
 
@@ -20,12 +22,17 @@ export const ApplicationsPage = () => {
 
   return (
     <div className="space-y-4">
+      {applications.length === 0 && (
+        <section className="rounded-md border border-slate-200 bg-white p-5 text-sm text-slate-600">
+          Applied jobs will appear here after you submit an application.
+        </section>
+      )}
       {applications.map((application) => (
         <article key={application._id} className="rounded-md border border-slate-200 bg-white p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="font-semibold text-ink">{application.job?.title}</h2>
-              <p className="text-sm text-slate-500">{application.job?.company?.name} · ATS {application.atsScore || 0}%</p>
+              <p className="text-sm text-slate-500">{application.job?.company?.name} - ATS {application.atsScore || 0}%</p>
             </div>
             <span className="rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">{application.status}</span>
           </div>

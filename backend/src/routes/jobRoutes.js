@@ -15,7 +15,7 @@ import { ROLES } from '../utils/constants.js';
 
 export const jobRoutes = express.Router();
 
-jobRoutes.get('/', listJobs);
+jobRoutes.get('/', protect, listJobs);
 jobRoutes.get('/feed', hiringFeed);
 jobRoutes.use(protect);
 jobRoutes.post('/', authorize(ROLES.RECRUITER), createJob);
