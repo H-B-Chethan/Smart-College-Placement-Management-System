@@ -6,7 +6,7 @@
 
 #### Live Demo
 
-[smart-placement-mgmt-system.netlify.app](https://smart-placement-mgmt-system.netlify.app/login)
+[smart-placement-mgmt-system.netlify.app](https://smart-placement-mgmt-system.netlify.app)
 
 </div>
 
@@ -20,11 +20,11 @@ The **Smart College Placement Management System** automates and streamlines the 
 
 ## 🔗 Live Links
 
-| Service        | URL                                                                                              |
-| -------------- | ------------------------------------------------------------------------------------------------ |
-| 🌐 Frontend    | [smart-placement-mgmt-system.netlify.app](https://smart-placement-mgmt-system.netlify.app/login) |
-| ⚙️ Backend API | [smart-placement-api-ez7x.onrender.com](https://smart-placement-api-ez7x.onrender.com/)          |
-| ✅ API Health  | [/api/health](https://smart-placement-api-ez7x.onrender.com/api/health)                          |
+| Service        | URL                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------ |
+| 🌐 Frontend    | [smart-placement-mgmt-system.netlify.app](https://smart-placement-mgmt-system.netlify.app) |
+| ⚙️ Backend API | [smart-placement-api-ez7x.onrender.com](https://smart-placement-api-ez7x.onrender.com/)    |
+| ✅ API Health  | [/api/health](https://smart-placement-api-ez7x.onrender.com/api/health)                    |
 
 > ⚠️ Backend hosted on Render free tier — may take ~30 seconds to wake up on first request.
 
