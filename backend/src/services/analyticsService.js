@@ -5,28 +5,49 @@ import { Application } from '../models/Application.js';
 import { Offer } from '../models/Offer.js';
 import { Company } from '../models/Company.js';
 import { AuditLog } from '../models/AuditLog.js';
+import { SavedJob } from '../models/SavedJob.js';
 import { ROLES } from '../utils/constants.js';
+
+const completionFields = ['usn', 'branch', 'cgpa', 'backlogs', 'graduationYear', 'skills'];
 
 export const getDashboardStats = async (role, userId) => {
   if (role === ROLES.STUDENT) {
-    const [applications, offers] = await Promise.all([
+    const [applications, interviews, offers, savedJobs, activeJobs, profile] = await Promise.all([
       Application.countDocuments({ student: userId }),
-      Offer.countDocuments({ student: userId })
+      Application.countDocuments({ student: userId, status: 'interview_scheduled' }),
+      Offer.countDocuments({ student: userId }),
+      SavedJob.countDocuments({ student: userId }),
+      Job.countDocuments({ status: 'active' }),
+      Student.findOne({ user: userId })
     ]);
-    return { applications, offers };
+    const completed = profile
+      ? completionFields.filter((field) => (Array.isArray(profile[field]) ? profile[field].length : profile[field] !== undefined && profile[field] !== '')).length
+      : 0;
+    return {
+      profileCompletion: Math.round((completed / completionFields.length) * 100),
+      applications,
+      interviews,
+      activeJobs,
+      offers,
+      savedJobs,
+      placementProbability: profile?.placementProbability || 0
+    };
   }
 
   if (role === ROLES.RECRUITER) {
     const jobs = await Job.find({ recruiter: userId });
     const jobIds = jobs.map((job) => job._id);
-    const [applications, offers] = await Promise.all([
+    const [applications, shortlisted, offers] = await Promise.all([
       Application.countDocuments({ job: { $in: jobIds } }),
+      Application.countDocuments({ job: { $in: jobIds }, status: 'shortlisted' }),
       Offer.countDocuments({ job: { $in: jobIds } })
     ]);
     return {
       totalJobsPosted: jobs.length,
       activeJobs: jobs.filter((job) => job.status === 'active').length,
+      closedJobs: jobs.filter((job) => job.status !== 'active').length,
       totalApplications: applications,
+      shortlistedCandidates: shortlisted,
       offersReleased: offers
     };
   }

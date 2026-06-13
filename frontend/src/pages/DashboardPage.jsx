@@ -7,9 +7,40 @@ import { JobCard } from '../components/JobCard.jsx';
 
 const dashboardLabels = {
   student: ['Profile Completion %', 'Jobs Applied', 'Interviews Scheduled', 'Offers Received', 'Saved Jobs', 'Placement Probability Score'],
-  recruiter: ['Total Jobs Posted', 'Active Jobs', 'Total Applications', 'Shortlisted Candidates', 'Scheduled Interviews', 'Offers Released'],
+  recruiter: ['Total Jobs Posted', 'Total Applicants', 'Active Jobs', 'Closed Jobs', 'Shortlisted Candidates', 'Offers Released'],
   placement_officer: ['Total Students', 'Total Recruiters', 'Total Jobs', 'Placement Percentage', 'Highest Package', 'Average Package'],
   admin: ['Total Users', 'Active Sessions', 'Audit Logs', 'Job Statistics', 'Platform Health', 'System Analytics']
+};
+
+const getDashboardValues = (role, stats) => {
+  if (role === 'student') {
+    return [
+      stats.profileCompletion || 0,
+      stats.applications || 0,
+      stats.interviews || 0,
+      stats.offers || 0,
+      stats.savedJobs || 0,
+      stats.placementProbability || 0
+    ];
+  }
+  if (role === 'recruiter') {
+    return [
+      stats.totalJobsPosted || 0,
+      stats.totalApplications || 0,
+      stats.activeJobs || 0,
+      stats.closedJobs || 0,
+      stats.shortlistedCandidates || 0,
+      stats.offersReleased || 0
+    ];
+  }
+  return [
+    stats.totalStudents || stats.totalUsers || 0,
+    stats.totalRecruiters || 0,
+    stats.totalJobs || 0,
+    stats.placementPercentage || 0,
+    stats.highestPackage || 0,
+    stats.averagePackage || 0
+  ];
 };
 
 export const DashboardPage = () => {
@@ -24,14 +55,7 @@ export const DashboardPage = () => {
   }, [dispatch]);
 
   const labels = dashboardLabels[user?.role] || dashboardLabels.student;
-  const values = [
-    stats.profileCompletion || 78,
-    stats.applications || stats.totalJobsPosted || stats.totalStudents || stats.totalUsers,
-    stats.activeJobs || 3,
-    stats.offers || stats.placementPercentage || stats.totalApplications,
-    stats.highestPackage || stats.offersReleased || 0,
-    stats.averagePackage || stats.placementProbability || 0
-  ];
+  const values = getDashboardValues(user?.role, stats);
 
   return (
     <div className="space-y-6">
@@ -49,6 +73,20 @@ export const DashboardPage = () => {
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {(feed.recentJobs || []).slice(0, 4).map((job) => <JobCard key={job._id} job={job} />)}
+          </div>
+          <div className="mt-6">
+            <div className="mb-3 flex items-center gap-2">
+              <CalendarDays size={20} className="text-accent" />
+              <h2 className="text-lg font-semibold text-ink">Upcoming Recruitment Drives</h2>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {(feed.closingSoonJobs || []).slice(0, 4).map((job) => (
+                <div key={job._id} className="rounded-md border border-slate-200 bg-white p-4">
+                  <p className="font-medium text-ink">{job.title}</p>
+                  <p className="text-sm text-slate-500">{job.company?.name || 'Company'} closes {job.closingDate ? new Date(job.closingDate).toLocaleDateString() : 'soon'}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
         <aside className="space-y-4">

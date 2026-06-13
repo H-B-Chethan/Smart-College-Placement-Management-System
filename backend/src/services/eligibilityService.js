@@ -19,6 +19,9 @@ export const checkEligibility = async ({ studentUserId, jobId }) => {
   if (job.graduationYear && student.graduationYear !== job.graduationYear) {
     reasons.push(`Graduation year must be ${job.graduationYear}`);
   }
+  const studentSkills = new Set((student.skills || []).map((skill) => skill.toLowerCase()));
+  const missingSkills = (job.requiredSkills || []).filter((skill) => !studentSkills.has(skill.toLowerCase()));
+  missingSkills.forEach((skill) => reasons.push(`Required skill ${skill} is missing`));
 
   return { eligible: reasons.length === 0, reasons, student, job };
 };

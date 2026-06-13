@@ -1,6 +1,7 @@
 import { Application } from '../models/Application.js';
 import { Job } from '../models/Job.js';
 import { Resume } from '../models/Resume.js';
+import { Student } from '../models/Student.js';
 import { Interview } from '../models/Interview.js';
 import { Offer } from '../models/Offer.js';
 import { AppError } from '../utils/AppError.js';
@@ -17,7 +18,7 @@ export const applyForJob = asyncHandler(async (req, res) => {
   }
 
   const eligibility = await checkEligibility({ studentUserId: req.user._id, jobId: req.params.jobId });
-  if (!eligibility.eligible) throw new AppError(eligibility.reasons.join(', '), 400);
+  if (!eligibility.eligible) throw new AppError(`You are not eligible because ${eligibility.reasons.join(', ')}.`, 400);
 
   const resume = req.body.resumeId
     ? await Resume.findOne({ _id: req.body.resumeId, student: req.user._id })
@@ -45,12 +46,37 @@ export const applyForJob = asyncHandler(async (req, res) => {
 });
 
 export const listApplications = asyncHandler(async (req, res) => {
-  const filter = req.user.role === 'student' ? { student: req.user._id } : {};
+  const filter = {};
+  if (req.user.role === 'student') filter.student = req.user._id;
+  if (req.query.status) filter.status = req.query.status;
+  if (req.query.student) filter.student = req.query.student;
+
+  if (req.user.role === 'recruiter') {
+    const recruiterJobs = await Job.find({ recruiter: req.user._id }).select('_id');
+    filter.job = { $in: recruiterJobs.map((job) => job._id) };
+  }
+  if (req.query.job) filter.job = req.query.job;
+
   const applications = await Application.find(filter)
     .populate({ path: 'job', populate: { path: 'company' } })
     .populate('student', 'name email')
+    .populate('resume')
     .sort({ createdAt: -1 });
-  res.json({ success: true, applications });
+
+  const studentProfiles = await Student.find({
+    user: { $in: applications.map((application) => application.student?._id).filter(Boolean) }
+  });
+  const profileByUserId = new Map(studentProfiles.map((profile) => [profile.user.toString(), profile]));
+
+  const enrichedApplications = applications.map((application) => {
+    const record = application.toObject();
+    const profile = profileByUserId.get(application.student?._id?.toString());
+    record.studentProfile = profile;
+    record.eligibilityStatus = application.missingSkills?.length ? 'Not Eligible' : 'Eligible';
+    return record;
+  });
+
+  res.json({ success: true, applications: enrichedApplications });
 });
 
 export const updateApplicationStatus = asyncHandler(async (req, res) => {
@@ -65,6 +91,7 @@ export const updateApplicationStatus = asyncHandler(async (req, res) => {
   if (!application) throw new AppError('Application not found', 404);
 
   if (req.body.status === 'shortlisted') await Job.findByIdAndUpdate(application.job._id, { $inc: { shortlistedCount: 1 } });
+  if (req.body.status === 'selected') await Job.findByIdAndUpdate(application.job._id, { $inc: { offersCount: 1 } });
 
   await createNotification({
     recipient: application.student._id,

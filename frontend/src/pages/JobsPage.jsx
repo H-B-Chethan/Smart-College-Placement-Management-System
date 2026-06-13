@@ -9,6 +9,7 @@ export const JobsPage = () => {
   const dispatch = useDispatch();
   const jobs = useSelector((state) => state.app.jobs);
   const [filters, setFilters] = useState({ q: '', location: '', workMode: '', skill: '' });
+  const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
     dispatch(fetchJobs(filters));
@@ -20,8 +21,14 @@ export const JobsPage = () => {
   };
 
   const apply = async (job) => {
-    await api.post(`/applications/jobs/${job._id}/apply`);
-    dispatch(fetchJobs(filters));
+    setMessage({ type: '', text: '' });
+    try {
+      await api.post(`/applications/jobs/${job._id}/apply`);
+      setMessage({ type: 'success', text: 'Application submitted successfully.' });
+      dispatch(fetchJobs(filters));
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.message || 'Unable to apply for this job.' });
+    }
   };
 
   const save = async (job) => {
@@ -44,6 +51,11 @@ export const JobsPage = () => {
           <Search size={18} /> Search
         </button>
       </form>
+      {message.text && (
+        <div className={`rounded-md border px-4 py-3 text-sm ${message.type === 'error' ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-brand'}`}>
+          {message.text}
+        </div>
+      )}
       <div className="grid gap-4 lg:grid-cols-2">
         {jobs.map((job) => <JobCard key={job._id} job={job} onApply={apply} onSave={save} />)}
       </div>

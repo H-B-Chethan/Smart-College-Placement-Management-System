@@ -28,7 +28,8 @@ export const notifyMatchingStudents = async (job) => {
     branch: { $in: job.allowedBranches?.length ? job.allowedBranches : [/.*/] },
     cgpa: { $gte: job.minimumCgpa || 0 },
     backlogs: { $lte: job.maximumBacklogs || 0 },
-    ...(job.graduationYear ? { graduationYear: job.graduationYear } : {})
+    ...(job.graduationYear ? { graduationYear: job.graduationYear } : {}),
+    ...(job.requiredSkills?.length ? { skills: { $all: job.requiredSkills } } : {})
   }).populate('user', 'email name');
 
   await Promise.all(

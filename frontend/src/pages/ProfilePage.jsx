@@ -22,6 +22,9 @@ const emptyJob = {
   description: ''
 };
 
+const skillOptions = ['Java', 'Python', 'SQL', 'MongoDB', 'Node.js', 'React.js', 'JavaScript', 'DSA', 'C++', 'Machine Learning'];
+const roundOptions = ['Aptitude Test', 'Technical Round', 'Coding Round', 'Group Discussion', 'HR Round'];
+
 const getApiError = (error) => error.response?.data?.message || error.message || 'Request failed';
 
 const TextInput = ({ label, value, onChange, type = 'text', placeholder, required = false }) => (
@@ -44,11 +47,41 @@ const splitList = (value) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
+const MultiSelect = ({ label, options, value = [], onChange }) => {
+  const selected = new Set(value);
+  const toggle = (option) => {
+    const next = new Set(selected);
+    if (next.has(option)) next.delete(option);
+    else next.add(option);
+    onChange([...next]);
+  };
+
+  return (
+    <fieldset className="text-sm font-medium text-slate-700">
+      <legend>{label}</legend>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {options.map((option) => (
+          <label key={option} className={`focus-within:ring-brand inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm ${selected.has(option) ? 'border-brand bg-emerald-50 text-brand' : 'border-slate-200 text-slate-700'}`}>
+            <input type="checkbox" className="h-4 w-4 accent-emerald-600" checked={selected.has(option)} onChange={() => toggle(option)} />
+            {option}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+};
+
 const hasStudentProfileData = (profile = {}) =>
   ['phone', 'usn', 'branch', 'cgpa', 'backlogs', 'graduationYear', 'linkedin', 'github', 'portfolio'].some((field) => Boolean(profile[field])) ||
   (profile.skills || []).length > 0;
 
-const StudentProfile = ({ profile, setProfile }) => {
+const profileCompletion = (profile = {}) => {
+  const fields = ['usn', 'branch', 'cgpa', 'backlogs', 'graduationYear', 'skills'];
+  const completed = fields.filter((field) => (Array.isArray(profile[field]) ? profile[field].length : profile[field] !== undefined && profile[field] !== '')).length;
+  return Math.round((completed / fields.length) * 100);
+};
+
+const StudentProfile = ({ user, profile, setProfile }) => {
   const [resumes, setResumes] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const hasSavedProfile = hasStudentProfileData(profile);
@@ -75,6 +108,8 @@ const StudentProfile = ({ profile, setProfile }) => {
   };
 
   const profileRows = [
+    ['Name', user?.name],
+    ['Email', user?.email],
     ['Phone', profile.phone],
     ['USN', profile.usn],
     ['Branch', profile.branch],
@@ -92,7 +127,10 @@ const StudentProfile = ({ profile, setProfile }) => {
       {hasSavedProfile && !isEditing ? (
         <section className="rounded-md border border-slate-200 bg-white p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-ink">Student Profile</h2>
+            <div>
+              <h2 className="text-lg font-semibold text-ink">Student Profile</h2>
+              <p className="text-sm text-slate-500">Profile completion: {profileCompletion(profile)}%</p>
+            </div>
             <button onClick={() => setIsEditing(true)} className="focus-ring inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 font-medium text-white">
               <Pencil size={16} /> Edit
             </button>
@@ -109,19 +147,15 @@ const StudentProfile = ({ profile, setProfile }) => {
       ) : (
         <form onSubmit={saveStudent} className="rounded-md border border-slate-200 bg-white p-5">
           <h2 className="text-lg font-semibold text-ink">Student Profile</h2>
+          <p className="mt-1 text-sm text-slate-500">Profile completion: {profileCompletion(profile)}%</p>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {['phone', 'usn', 'branch', 'cgpa', 'backlogs', 'graduationYear', 'linkedin', 'github', 'portfolio'].map((field) => (
               <TextInput key={field} label={field} value={profile[field]} onChange={(value) => setProfile({ ...profile, [field]: value })} />
             ))}
           </div>
-          <label className="mt-4 block text-sm font-medium text-slate-700">
-            Skills
-            <input
-              className="focus-ring mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
-              value={(profile.skills || []).join(', ')}
-              onChange={(event) => setProfile({ ...profile, skills: splitList(event.target.value) })}
-            />
-          </label>
+          <div className="mt-4">
+            <MultiSelect label="Skills" options={skillOptions} value={profile.skills || []} onChange={(skills) => setProfile({ ...profile, skills })} />
+          </div>
           <div className="mt-5 flex flex-wrap gap-3">
             <button className="focus-ring rounded-md bg-brand px-4 py-2 font-medium text-white">Save profile</button>
             {hasSavedProfile && (
@@ -202,8 +236,8 @@ const RecruiterWorkspace = ({ profile, setProfile }) => {
         location: job.location,
         openDate: job.openDate,
         closingDate: job.closingDate,
-        requiredSkills: splitList(job.requiredSkills),
-        roundsConducted: splitList(job.roundsConducted),
+        requiredSkills: Array.isArray(job.requiredSkills) ? job.requiredSkills : splitList(job.requiredSkills),
+        roundsConducted: Array.isArray(job.roundsConducted) ? job.roundsConducted : splitList(job.roundsConducted),
         allowedBranches: splitList(job.allowedBranches),
         minimumCgpa: Number(job.minimumCgpa || 0),
         maximumBacklogs: Number(job.maximumBacklogs || 0),
@@ -250,8 +284,12 @@ const RecruiterWorkspace = ({ profile, setProfile }) => {
           <TextInput label="Package" required value={job.package} onChange={(value) => setJob({ ...job, package: value })} placeholder="Example: 8" />
           <TextInput label="Recruitment start date" type="date" value={job.openDate} onChange={(value) => setJob({ ...job, openDate: value })} />
           <TextInput label="Recruitment end date" required type="date" value={job.closingDate} onChange={(value) => setJob({ ...job, closingDate: value })} />
-          <TextInput label="Skills needed" required value={job.requiredSkills} onChange={(value) => setJob({ ...job, requiredSkills: value })} placeholder="React, Node.js, MongoDB" />
-          <TextInput label="Rounds conducted" value={job.roundsConducted} onChange={(value) => setJob({ ...job, roundsConducted: value })} placeholder="Aptitude, Technical, HR" />
+          <div className="md:col-span-2">
+            <MultiSelect label="Required skills" options={skillOptions} value={Array.isArray(job.requiredSkills) ? job.requiredSkills : splitList(job.requiredSkills)} onChange={(requiredSkills) => setJob({ ...job, requiredSkills })} />
+          </div>
+          <div className="md:col-span-2">
+            <MultiSelect label="Recruitment rounds" options={roundOptions} value={Array.isArray(job.roundsConducted) ? job.roundsConducted : splitList(job.roundsConducted)} onChange={(roundsConducted) => setJob({ ...job, roundsConducted })} />
+          </div>
           <TextInput label="Allowed branches" value={job.allowedBranches} onChange={(value) => setJob({ ...job, allowedBranches: value })} placeholder="CSE, ISE, ECE" />
           <TextInput label="Minimum CGPA" value={job.minimumCgpa} onChange={(value) => setJob({ ...job, minimumCgpa: value })} />
           <TextInput label="Maximum backlogs" value={job.maximumBacklogs} onChange={(value) => setJob({ ...job, maximumBacklogs: value })} />
@@ -356,5 +394,5 @@ export const ProfilePage = () => {
   if (user?.role === 'recruiter') return <RecruiterWorkspace profile={profile} setProfile={setProfile} />;
   if (user?.role === 'placement_officer') return <PlacementOfficerWorkspace />;
   if (user?.role === 'admin') return <AdminWorkspace />;
-  return <StudentProfile profile={profile} setProfile={setProfile} />;
+  return <StudentProfile user={user} profile={profile} setProfile={setProfile} />;
 };
