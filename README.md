@@ -4,13 +4,9 @@
 
 ### A full-stack campus recruitment platform connecting Students, Recruiters & Placement Administrators
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Frontend-4CAF50?style=for-the-badge)](https://smart-placement-mgmt-system.netlify.app/login)
-[![API](https://img.shields.io/badge/🚀_Live_API-Backend-2196F3?style=for-the-badge)](https://smart-placement-api-ez7x.onrender.com/)
-[![Health Check](https://img.shields.io/badge/✅_API-Health_Check-FF9800?style=for-the-badge)](https://smart-placement-api-ez7x.onrender.com/api/health)
+#### Live Demo
 
-![GitHub last commit](https://img.shields.io/github/last-commit/H-B-Chethan/Smart-College-Placement-Management-System?style=flat-square)
-![GitHub repo size](https://img.shields.io/github/repo-size/H-B-Chethan/Smart-College-Placement-Management-System?style=flat-square)
-![GitHub stars](https://img.shields.io/github/stars/H-B-Chethan/Smart-College-Placement-Management-System?style=flat-square)
+[smart-placement-mgmt-system.netlify.app](https://smart-placement-mgmt-system.netlify.app/login)
 
 </div>
 
@@ -229,7 +225,7 @@ npm start
 
 ### Chethan H B
 
-**Computer Science & Engineering**  
+**Information Science & Engineering Graduate**  
 Global Academy of Technology
 
 [![GitHub](https://img.shields.io/badge/GitHub-H--B--Chethan-181717?style=for-the-badge&logo=github)](https://github.com/H-B-Chethan)
