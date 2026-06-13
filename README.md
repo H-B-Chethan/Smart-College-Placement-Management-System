@@ -4,7 +4,7 @@
 
 ### A full-stack campus recruitment platform connecting Students, Recruiters & Placement Administrators
 
-#### Live Demo
+#### Live Demo:-
 
 [smart-placement-mgmt-system.netlify.app](https://smart-placement-mgmt-system.netlify.app)
 
